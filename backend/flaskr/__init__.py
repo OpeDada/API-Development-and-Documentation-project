@@ -74,10 +74,13 @@ def create_app(test_config=None):
 
     @app.route("/questions")
     def get_questions():
-        selection = Question.query.order_by(Question.id).all()
-        current_questions = paginate_questions(request, selection)
-        categories = Category.query.order_by(Category.id).all()
-        # current_category =
+        questions = Question.query.order_by(Question.id).all()
+        current_questions = paginate_questions(request, questions)
+        total_questions = len(Question.query.all())
+        # current_category = [str(question.category).format() for question in questions]
+        # current_category
+        all_categories = Category.query.order_by(Category.id).all()
+        categories = [cat.type.format() for cat in all_categories]
 
         if len(current_questions) == 0:
             abort(404)
@@ -86,9 +89,9 @@ def create_app(test_config=None):
             {
                 "success": True,
                 "questions": current_questions,
-                "total_questions": len(Question.query.all()),
+                "total_questions": total_questions,
                 "current_category": "",
-                "categories": [cat.type.format() for cat in categories],
+                "categories": categories,
             }
         )
 
@@ -96,11 +99,33 @@ def create_app(test_config=None):
     @TODO:
     Create an endpoint to DELETE question using a question ID.
 
-
-
     TEST: When you click the trash icon next to a question, the question will be removed.
     This removal will persist in the database and when you refresh the page.
     """
+
+    @app.route("/questions/<int:book_id>", methods=["DELETE"])
+    def delete_question(question_id):
+        try:
+            question = Question.query.filter(Question.id == question_id).one_or_none()
+
+            if question is None:
+                abort(404)
+
+            question.delete()
+            selection = Question.query.order_by(Question.id).all()
+            current_questions = paginate_questions(request, selection)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "deleted": question_id,
+                    "questions": current_questions,
+                    "total_questions": len(Question.query.all()),
+                }
+            )
+
+        except:
+            abort(422)
 
     """
     @TODO:
@@ -112,6 +137,35 @@ def create_app(test_config=None):
     the form will clear and the question will appear at the end of the last page
     of the questions list in the "List" tab.
     """
+
+    @app.route("/questions", methods=["POST"])
+    def create_question():
+        body = request.get_json()
+
+        new_question = body.get("question", None)
+        new_answer = body.get("answer", None)
+        new_category = body.get("category", None)
+        new_difficulty = body.get("difficulty", None)
+
+        try:
+            question = Question(question=new_question, answer=new_answer, category=new_category, difficulty=new_difficulty)
+            question.insert()
+
+            selection = Question.query.order_by(Question.id).all()
+            current_questions = paginate_questions(request, selection)
+
+            return jsonify(
+                {
+                    "success": True,
+                    "created": question.id,
+                    "questions": current_questions,
+                    "total_questions": len(Question.query.all()),
+                }
+            )
+
+        except:
+            abort(422)
+
 
     """
     @TODO:
@@ -133,6 +187,17 @@ def create_app(test_config=None):
     category to be shown.
     """
 
+    @app.route('/categories/<int:category_id>/questions')
+    def question_category(category_id):
+        question = Question.query.filter(Question.category == category_id).order_by(Question.id).all()
+        current_questions = paginate_questions(request, question)
+
+        return jsonify({
+            'success': True,
+            'category_question': current_questions,
+            'total_questions': len(question)
+        })
+
     """
     @TODO:
     Create a POST endpoint to get questions to play the quiz.
@@ -150,5 +215,32 @@ def create_app(test_config=None):
     Create error handlers for all expected errors
     including 404 and 422.
     """
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return (
+            jsonify({"success": False, "error": 404, "message": "resource not found"}),
+            404,
+        )
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return (
+            jsonify({"success": False, "error": 422, "message": "unprocessable"}),
+            422,
+        )
+
+    @app.errorhandler(405)
+    def not_found(error):
+        return (
+            jsonify({"success": False, "error": 405, "message": "method not allowed"}),
+            405,
+        )
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({"success": False, "error": 400, "message": "bad request"}), 400
+
+
 
     return app
