@@ -78,7 +78,7 @@ def create_app(test_config=None):
         current_questions = paginate_questions(request, questions)
         total_questions = len(Question.query.all())
         # current_category = [str(question.category).format() for question in questions]
-        # current_category
+
         all_categories = Category.query.order_by(Category.id).all()
         categories = [cat.type.format() for cat in all_categories]
 
@@ -90,7 +90,7 @@ def create_app(test_config=None):
                 "success": True,
                 "questions": current_questions,
                 "total_questions": total_questions,
-                "current_category": "",
+                "current_category": None,
                 "categories": categories,
             }
         )
@@ -178,6 +178,20 @@ def create_app(test_config=None):
     Try using the word "title" to start.
     """
 
+    @app.route("/questions", methods=["POST"])
+    def search_question():
+      body = request.get_json()
+      new_search_term = body.get('search_term', None)
+      search_term = Question.query.filter(Question.question.ilike('%'+new_search_term+'%')).all()
+
+      if search_term:
+        current_questions = paginate_questions(request, search_term)
+
+      return jsonify({
+        'success': True,
+        "questions": current_questions,
+      })
+
     """
     @TODO:
     Create a GET endpoint to get questions based on category.
@@ -188,7 +202,7 @@ def create_app(test_config=None):
     """
 
     @app.route('/categories/<int:category_id>/questions')
-    def question_category(category_id):
+    def questions_category(category_id):
         question = Question.query.filter(Question.category == category_id).order_by(Question.id).all()
         current_questions = paginate_questions(request, question)
 
@@ -216,18 +230,15 @@ def create_app(test_config=None):
     including 404 and 422.
     """
 
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({"success": False, "error": 400, "message": "bad request"}), 400
+
     @app.errorhandler(404)
     def not_found(error):
         return (
             jsonify({"success": False, "error": 404, "message": "resource not found"}),
             404,
-        )
-
-    @app.errorhandler(422)
-    def unprocessable(error):
-        return (
-            jsonify({"success": False, "error": 422, "message": "unprocessable"}),
-            422,
         )
 
     @app.errorhandler(405)
@@ -237,10 +248,19 @@ def create_app(test_config=None):
             405,
         )
 
-    @app.errorhandler(400)
-    def bad_request(error):
-        return jsonify({"success": False, "error": 400, "message": "bad request"}), 400
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return (
+            jsonify({"success": False, "error": 422, "message": "unprocessable"}),
+            422,
+        )
 
-
+    @app.errorhandler(500)
+    def internal_error(error):
+        return (
+            jsonify({"success": False, "error": 500,
+                    "message": "internal server error"}),
+            500,
+        )
 
     return app
