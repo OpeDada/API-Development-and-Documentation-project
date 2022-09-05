@@ -71,9 +71,9 @@ One note before you delve into your tasks: for each endpoint, you are expected t
 
 You will need to provide detailed documentation of your API endpoints including the URL, request parameters, and the response body. Use the example below as a reference.
 
-### Documentation Example
+### API Documentation
 
-`GET '/api/v1.0/categories'`
+`GET '/categories'`
 
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
 - Request Arguments: None
@@ -81,14 +81,144 @@ You will need to provide detailed documentation of your API endpoints including 
 
 ```json
 {
-  "1": "Science",
-  "2": "Art",
-  "3": "Geography",
-  "4": "History",
-  "5": "Entertainment",
-  "6": "Sports"
+  "categories": {
+    "1": "Science",
+    "2": "Art",
+    "3": "Geography",
+    "4": "History",
+    "5": "Entertainment",
+    "6": "Sports"
+  },
+  "success": true,
+  "total_categories": 6
 }
 ```
+
+`GET '/questions'`
+
+- Fetches a list of questions with pages (10 questions per page) and it also includes the total number of pages, all the categories and the current category.
+- Request Arguments: None
+- Returns: An object with a single key, `categories`, that contains an object of `id: category_string` key: value pairs, `current category` as a string, and `questions` as a list of objects.
+
+```json
+{
+  "categories": {
+    "1": "Science",
+    "2": "Art",
+    "3": "Geography",
+    "4": "History",
+    "5": "Entertainment",
+    "6": "Sports"
+  },
+  "current_category": "Art",
+  "questions": [
+    {
+      "answer": "Tom Cruise",
+      "category": 5,
+      "difficulty": 4,
+      "id": 4,
+      "question": "What actor did author Anne Rice first denounce, then praise in the role of her beloved Lestat?"
+    },
+    {
+      "answer": "Maya Angelou",
+      "category": 4,
+      "difficulty": 2,
+      "id": 5,
+      "question": "Whose autobiography is entitled 'I Know Why the Caged Bird Sings'?"
+    },
+  ],
+   "success": true,
+   "total_questions": 106
+}
+```
+
+`DELETE '/questions/id'`
+
+- Removes a question queried with a specified id
+- Request Arguments: `id` (integer)
+- Returns: the specified HTTP status code which includes a success message, the id of the deleted question, and the total questions.
+
+```json
+{
+    "success": true,
+    "deleted": 4,
+    "total_questions": 105,
+}
+```
+
+`POST '/questions'`
+
+- Creates and appends a new question to the database with specified parameters such as the `question` and `answer` text as strings, `category`, and `difficulty` score as integers.
+- Request Arguments: None
+- Returns: the specified HTTP status code which includes a success message, the id of the created question, and the total questions.
+
+```json
+{
+  "question": "Sample question string",
+  "answer": "Sample answer string",
+  "difficulty": 4,
+  "category": 2
+}
+```
+
+`POST '/questions/search'`
+
+- Searches for a specific question/questions in the database queried with a search term.
+- Request Arguments: User's search term (string)
+- Returns: Only the question/ list of questions that matches the query
+
+- Request Body:
+```json
+
+{
+  "searchTerm": "title"
+}
+```
+
+- Response:
+
+```json
+{
+  "questions": [
+    {
+      "answer": "Maya Angelou",
+      "category": 4,
+      "difficulty": 2,
+      "id": 5,
+      "question": "Whose autobiography is entitled 'I Know Why the Caged Bird Sings'?"
+    },
+    {
+      "answer": "Edward Scissorhands",
+      "category": 5,
+      "difficulty": 3,
+      "id": 6,
+      "question": "What was the title of the 1990 fantasy directed by Tim Burton about a young man with multi-bladed appendages?"
+    }
+  ],
+  "success": true
+}
+```
+
+`GET '/categories/id/questions'`
+
+- Retrieves a lif of questions based on their category, queried with a specified category id.
+- Request Arguments: `id` (integer)
+- Returns: the specified HTTP status code which includes a success message, the id of the created question, and the total questions.
+
+```json
+{
+  "question": "Sample question string",
+  "answer": "Sample answer string",
+  "difficulty": 4,
+  "category": 2
+}
+```
+
+
+
+
+
+
 
 ## Testing
 

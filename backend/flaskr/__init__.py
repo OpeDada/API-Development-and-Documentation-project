@@ -213,10 +213,15 @@ def create_app(test_config=None):
       try:
         question = Question.query.filter(Question.category == category_id).order_by(Question.id).all()
         current_questions = paginate_questions(request, question)
+        all_categories = Category.query.order_by(Category.id).all()
+        # current_category = {cat.type.format() for cat in all_categories}
+        # if current_category is None:
+        #     abort(404)
 
         return jsonify({
             'success': True,
-            'category_question': current_questions,
+            # 'current_category': current_category,
+            'questions': current_questions,
             'total_questions': len(question)
         })
       except:
@@ -236,7 +241,23 @@ def create_app(test_config=None):
 
     @app.route("/quizzes", methods=['POST'])
     def play_quiz():
-      body = request.json()
+      body = request.get_json()
+      previous_questions = body.get('previous_questions', None)
+      category = body.get('quiz_category', None)
+      all_questions = Question.query.filter(Question.category==category["id"])
+      questions = [question.format() for question in all_questions if question.id not in previous_questions]
+
+      if questions == []:
+            return jsonify({
+              "success": True
+            })
+      else:
+        question = random.choice(questions)
+
+      return jsonify({
+            'success': True,
+            'question': question,
+        })
 
 
     """
