@@ -51,13 +51,17 @@ def create_app(test_config=None):
     @app.route("/categories")
     def get_categories():
 
-      body = Category.query.order_by(Category.id).all()
+      try:
+        all_categories = Category.query.order_by(Category.id).all()
+        categories = {cat.id: cat.type for cat in all_categories}
 
-      return jsonify({
-        "success": True,
-        "categories": [cat.format() for cat in body],
-        "total_categories": len(Category.query.all()),
-      })
+        return jsonify({
+          "success": True,
+          "categories": categories,
+          "total_categories": len(Category.query.all()),
+        })
+      except:
+        abort(404)
 
     """
     @TODO:
@@ -76,11 +80,8 @@ def create_app(test_config=None):
     def get_questions():
         questions = Question.query.order_by(Question.id).all()
         current_questions = paginate_questions(request, questions)
-        total_questions = len(Question.query.all())
-        # current_category = [str(question.category).format() for question in questions]
-
         all_categories = Category.query.order_by(Category.id).all()
-        categories = [cat.type.format() for cat in all_categories]
+        categories = {cat.id: cat.type for cat in all_categories}
 
         if len(current_questions) == 0:
             abort(404)
@@ -89,7 +90,7 @@ def create_app(test_config=None):
             {
                 "success": True,
                 "questions": current_questions,
-                "total_questions": total_questions,
+                "total_questions": len(Question.query.all()),
                 "current_category": None,
                 "categories": categories,
             }
@@ -103,7 +104,7 @@ def create_app(test_config=None):
     This removal will persist in the database and when you refresh the page.
     """
 
-    @app.route("/questions/<int:book_id>", methods=["DELETE"])
+    @app.route("/questions/<int:question_id>", methods=["DELETE"])
     def delete_question(question_id):
         try:
             question = Question.query.filter(Question.id == question_id).one_or_none()
@@ -113,7 +114,9 @@ def create_app(test_config=None):
 
             question.delete()
             selection = Question.query.order_by(Question.id).all()
+            # print(selection)
             current_questions = paginate_questions(request, selection)
+            # print(current_questions)
 
             return jsonify(
                 {
@@ -178,19 +181,22 @@ def create_app(test_config=None):
     Try using the word "title" to start.
     """
 
-    @app.route("/questions", methods=["POST"])
-    def search_question():
+    @app.route("/questions/search", methods=["POST"])
+    def search_questions():
       body = request.get_json()
-      new_search_term = body.get('search_term', None)
-      search_term = Question.query.filter(Question.question.ilike('%'+new_search_term+'%')).all()
+      new_search_term = body.get('searchTerm', None)
 
-      if search_term:
+      if new_search_term:
+        search_term = Question.query.filter(Question.question.ilike(f"%{new_search_term}%")).all()
         current_questions = paginate_questions(request, search_term)
 
-      return jsonify({
-        'success': True,
-        "questions": current_questions,
-      })
+        return jsonify({
+          'success': True,
+          "questions": current_questions,
+        })
+
+      else:
+        abort(422)
 
     """
     @TODO:
@@ -203,6 +209,8 @@ def create_app(test_config=None):
 
     @app.route('/categories/<int:category_id>/questions')
     def questions_category(category_id):
+
+      try:
         question = Question.query.filter(Question.category == category_id).order_by(Question.id).all()
         current_questions = paginate_questions(request, question)
 
@@ -211,6 +219,8 @@ def create_app(test_config=None):
             'category_question': current_questions,
             'total_questions': len(question)
         })
+      except:
+        abort(404)
 
     """
     @TODO:
@@ -223,6 +233,11 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
+
+    @app.route("/quizzes", methods=['POST'])
+    def play_quiz():
+      body = request.json()
+
 
     """
     @TODO:
