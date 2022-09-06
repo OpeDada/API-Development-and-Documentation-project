@@ -19,8 +19,12 @@ class TriviaTestCase(unittest.TestCase):
         setup_db(self.app, self.database_path)
 
         self.new_question = {"question": "Largest country in Africa", "answer": "Nigeria", "category": 3, "difficulty": 2}
-        self.search_term = {"searchTerm": "title"}
-        self.quiz = {"previous_questions": [], "quiz_category": {"type": "click", "id": 0}}
+        self.search_term = {"searchTerm": "country"}
+        self.failed_search_term = {"searchTerm": "bingo"}
+        self.quiz = {"previous_questions": [], "quiz_category": {"id": 0}}
+        self.failed_quiz = {"previous_questions": [
+          {"id":2}, {"id":4}
+          ], "quiz_category": {"id": 10000}}
 
         # binds the app to the current context
         with self.app.app_context():
@@ -94,7 +98,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["success"], False)
         self.assertEqual(data["message"], "unprocessable")
 
-
     def test_create_new_question(self):
         res = self.client().post("/questions", json=self.new_question)
         data = json.loads(res.data)
@@ -120,8 +123,8 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertIsNotNone(data['questions'])
 
-    def test_422_if_question_does_not_exist(self):
-        res = self.client().post("/questions/search", json={'search': 'bingo'})
+    def test_422_if_search_question_does_not_exist(self):
+        res = self.client().post("/questions/search", json=self.failed_search_term)
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 422)
@@ -134,7 +137,7 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-        self.assertTrue((data['category_question']))
+        self.assertTrue((data['questions']))
         self.assertTrue(data['total_questions'])
 
     def test_404_sent_requesting_category_not_found(self):
@@ -145,22 +148,21 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data["success"], False)
         self.assertEqual(data["message"], "resource not found")
 
-    # def test_for_play_quiz(self):
-    #     res = self.client().post("/quizzes", json=self.quiz)
-    #     data = json.loads(res.data)
+    def test_for_play_quiz(self):
+        res = self.client().post("/quizzes", json=self.quiz)
+        data = json.loads(res.data)
 
-    #     self.assertEqual(res.status_code, 200)
-    #     self.assertEqual(data['success'], True)
-    #     self.assertTrue(data['question'])
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertIsNotNone(data['question'])
 
-    # def test_400_for_failed_test(self):
-    #     res = self.client().post("/quizzes",
-    #     json=self.quiz_fail)
-    #     data = json.loads(res.data)
+    def test_400_for_failed_quiz(self):
+        res = self.client().post("/quizzes", json=self.failed_quiz)
+        data = json.loads(res.data)
 
-    #     self.assertEqual(res.status_code, 400)
-    #     self.assertEqual(data["success"], False)
-    #     self.assertEqual(data["message"], "bad request")
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(data["success"], False)
+        self.assertEqual(data["message"], "bad request")
 
 
 

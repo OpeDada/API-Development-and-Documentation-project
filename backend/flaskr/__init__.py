@@ -114,9 +114,7 @@ def create_app(test_config=None):
 
             question.delete()
             selection = Question.query.order_by(Question.id).all()
-            # print(selection)
             current_questions = paginate_questions(request, selection)
-            # print(current_questions)
 
             return jsonify(
                 {
@@ -186,9 +184,9 @@ def create_app(test_config=None):
       body = request.get_json()
       new_search_term = body.get('searchTerm', None)
 
-      if new_search_term:
-        search_term = Question.query.filter(Question.question.ilike(f"%{new_search_term}%")).all()
-        current_questions = paginate_questions(request, search_term)
+      search_result = Question.query.filter(Question.question.ilike(f"%{new_search_term}%")).all()
+      if search_result:
+        current_questions = paginate_questions(request, search_result)
 
         return jsonify({
           'success': True,
@@ -213,14 +211,12 @@ def create_app(test_config=None):
       try:
         question = Question.query.filter(Question.category == category_id).order_by(Question.id).all()
         current_questions = paginate_questions(request, question)
-        all_categories = Category.query.order_by(Category.id).all()
-        # current_category = {cat.type.format() for cat in all_categories}
-        # if current_category is None:
-        #     abort(404)
-
+        all_categories = Category.query.get(category_id)
+        if all_categories:
+            current_category = all_categories.format()["type"]
         return jsonify({
             'success': True,
-            # 'current_category': current_category,
+            'current_category': current_category,
             'questions': current_questions,
             'total_questions': len(question)
         })
@@ -244,19 +240,25 @@ def create_app(test_config=None):
       body = request.get_json()
       previous_questions = body.get('previous_questions', None)
       category = body.get('quiz_category', None)
-      all_questions = Question.query.filter(Question.category==category["id"])
-      questions = [question.format() for question in all_questions if question.id not in previous_questions]
 
-      if questions == []:
-            return jsonify({
-              "success": True
-            })
-      else:
-        question = random.choice(questions)
+      all_questions = Question.query.filter(Question.category==category["id"])
+      all_q_ids = [q.id for q in all_questions]
+
+      prev_q_ids = [q["id"] for q in previous_questions]
+
+      # check if a previous question exists
+      for prev_id in prev_q_ids:
+        if prev_id not in all_q_ids:
+          abort(400)
+
+      return_questions = []
+      for question in all_questions:
+        if question.id not in prev_q_ids:
+          return_questions.append(question)
 
       return jsonify({
-            'success': True,
-            'question': question,
+            "success": True,
+            "question": random.choice(return_questions).format() if len(return_questions)>0 else [],
         })
 
 
