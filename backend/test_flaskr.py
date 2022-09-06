@@ -22,9 +22,7 @@ class TriviaTestCase(unittest.TestCase):
         self.search_term = {"searchTerm": "country"}
         self.failed_search_term = {"searchTerm": "bingo"}
         self.quiz = {"previous_questions": [], "quiz_category": {"id": 0}}
-        self.failed_quiz = {"previous_questions": [
-          {"id":2}, {"id":4}
-          ], "quiz_category": {"id": 10000}}
+
 
         # binds the app to the current context
         with self.app.app_context():
@@ -155,15 +153,6 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
         self.assertIsNotNone(data['question'])
-
-    def test_400_for_failed_quiz(self):
-        res = self.client().post("/quizzes", json=self.failed_quiz)
-        data = json.loads(res.data)
-
-        self.assertEqual(res.status_code, 400)
-        self.assertEqual(data["success"], False)
-        self.assertEqual(data["message"], "bad request")
-
 
 
 # Make the tests conveniently executable

@@ -201,16 +201,48 @@ You will need to provide detailed documentation of your API endpoints including 
 
 `GET '/categories/id/questions'`
 
-- Retrieves a lif of questions based on their category, queried with a specified category id.
+- Retrieves a list of questions based on their category, queried with a specified category id.
 - Request Arguments: `id` (integer)
-- Returns: the specified HTTP status code which includes a success message, the id of the created question, and the total questions.
+- Returns: An object that contains the current category, the questions that belong to that category, and the total number of questions in the category
 
 ```json
 {
-  "question": "Sample question string",
-  "answer": "Sample answer string",
-  "difficulty": 4,
-  "category": 2
+  "current_category": "Sports",
+  "questions": [
+    {
+      "answer": "Brazil",
+      "category": 6,
+      "difficulty": 3,
+      "id": 10,
+      "question": "Which is the only team to play in every soccer World Cup tournament?"
+    },
+    {
+      "answer": "Uruguay",
+      "category": 6,
+      "difficulty": 4,
+      "id": 11,
+      "question": "Which country won the first ever soccer World Cup in 1930?"
+    }
+  ],
+  "success": true,
+  "total_questions": 2
+}
+```
+
+`POST '/quizzes'`
+
+- A POST request to get questions to play the quiz. It takes category and id of previous question parameters and returns an object of a random question within the given category.
+
+```json
+{
+  "question": {
+    "answer": "Sample answer string",
+    "category": 6,
+    "difficulty": 3,
+    "id": 5,
+    "question": "Sample question string?"
+  },
+  "success": true
 }
 ```
 

@@ -238,28 +238,27 @@ def create_app(test_config=None):
     @app.route("/quizzes", methods=['POST'])
     def play_quiz():
       body = request.get_json()
-      previous_questions = body.get('previous_questions', None)
+      prev_q_ids = body.get('previous_questions', None)
       category = body.get('quiz_category', None)
 
-      all_questions = Question.query.filter(Question.category==category["id"])
-      all_q_ids = [q.id for q in all_questions]
 
-      prev_q_ids = [q["id"] for q in previous_questions]
+      try:
+        all_questions = Question.query.filter(Question.category==category["id"])
+        questions = [question.format() for question in all_questions if question.id not in prev_q_ids]
+        if questions == []:
+              return jsonify({
+                "success": True,
+                "question": "",
+              })
+        else:
+          question = random.choice(questions)
 
-      # check if a previous question exists
-      for prev_id in prev_q_ids:
-        if prev_id not in all_q_ids:
-          abort(400)
-
-      return_questions = []
-      for question in all_questions:
-        if question.id not in prev_q_ids:
-          return_questions.append(question)
-
-      return jsonify({
-            "success": True,
-            "question": random.choice(return_questions).format() if len(return_questions)>0 else [],
-        })
+        return jsonify({
+                "success": True,
+                "question": question,
+            })
+      except:
+        abort(400)
 
 
     """
