@@ -240,23 +240,22 @@ def create_app(test_config=None):
       body = request.get_json()
       prev_q_ids = body.get('previous_questions', None)
       category = body.get('quiz_category', None)
-
-
       try:
-        all_questions = Question.query.filter(Question.category==category["id"])
+        if category["id"]==0:
+          all_questions = Question.query.all()
+        else:
+          all_questions = Question.query.filter(Question.category==category["id"])
         questions = [question.format() for question in all_questions if question.id not in prev_q_ids]
         if questions == []:
-              return jsonify({
-                "success": True,
-                "question": "",
-              })
+          return jsonify({
+            "success": True,
+            "question": "",
+          })
         else:
-          question = random.choice(questions)
-
-        return jsonify({
-                "success": True,
-                "question": question,
-            })
+          return jsonify({
+                  "success": True,
+                  "question": random.choice(questions),
+              })
       except:
         abort(400)
 
